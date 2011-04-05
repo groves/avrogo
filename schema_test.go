@@ -11,7 +11,7 @@ func TestDecode(t *testing.T) {
 		t.Fatalf("Can't open file; err=%s", err)
 	}
 	m := Load(reader)
-	if m["type"] != "record" {
+	if m.Id() != "org.apache.avro.Interop" {
 		t.Fatalf("Read json incorrectly? parsed=%v", m)
 	}
 }
