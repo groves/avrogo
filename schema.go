@@ -9,6 +9,62 @@ type Type interface {
 	Id() string
 }
 
+type Null struct{}
+
+func (n Null) Id() string {
+	return "null"
+}
+
+type Boolean struct{}
+
+func (b Boolean) Id() string {
+	return "boolean"
+}
+
+type Int struct{}
+
+func (i Int) Id() string {
+	return "int"
+}
+
+type Long struct{}
+
+func (l Long) Id() string {
+	return "long"
+}
+
+type Float struct{}
+
+func (f Float) Id() string {
+	return "float"
+}
+
+type Double struct{}
+
+func (d Double) Id() string {
+	return "double"
+}
+
+type Bytes struct{}
+
+func (b Bytes) Id() string {
+	return "bytes"
+}
+
+type String struct{}
+
+func (s String) Id() string {
+	return "string"
+}
+
+var primitives = map[string]Type{}
+
+func init() {
+	for _, t := range []Type{Null{}, Boolean{}, Int{}} {
+		primitives[t.Id()] = t
+	}
+}
+
 type Field struct {
 	name     string
 	doc      string
@@ -63,9 +119,17 @@ func loadRecord(obj map[string]interface{}) Record {
 }
 
 func loadType(obj map[string]interface{}) Type {
-	switch t, _ := obj["type"].(string); t {
-	case "record":
-		return loadRecord(obj)
+	if v, ok := obj["type"]; !ok {
+		panic("FFFFUUUUUU")
+	} else if t, ok := v.(string); !ok {
+		panic("UUUUUFFFFFF")
+	} else if p, ok := primitives[t]; ok {
+		return p
+	} else {
+		switch t {
+		case "record":
+			return loadRecord(obj)
+		}
 	}
 	panic("Unknown type: " + obj["type"].(string))
 }
