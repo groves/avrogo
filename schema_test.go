@@ -5,13 +5,29 @@ import (
 	"testing"
 )
 
-func TestDecode(t *testing.T) {
-	reader, err := os.Open("test_schema.json", os.O_RDONLY, 0444)
-	if err != nil {
-		t.Fatalf("Can't open file; err=%s", err)
+func load(t *testing.T, fn string) Type {
+	reader, err := os.Open(fn, os.O_RDONLY, 0444)
+	if err == nil {
+		return Load(reader)
 	}
-	m := Load(reader)
+	t.Fatalf("Unable to open file %s", fn)
+	panic("Shouldn't get here")
+}
+
+func TestDecode(t *testing.T) {
+	m := load(t, "test_schema.json")
 	if m.Id() != "org.apache.avro.Interop" {
 		t.Fatalf("Read json incorrectly? parsed=%v", m)
 	}
+}
+
+func TestPrimitiveDecode(t *testing.T) {
+	m := load(t, "primitive_record_schema.json")
+	if m.Id() != "test.AllPrimitives" {
+		t.Fatalf("Read record id incorrectly?%v", m)
+	}
+	if len(m.(Record).fields) != 8 {
+		t.Fatalf("Got incorrect number of fields?%v", m)
+	}
+
 }

@@ -1,6 +1,7 @@
 package avrogo
 
 import (
+	"fmt"
 	"io"
 	"json"
 )
@@ -77,6 +78,7 @@ type Record struct {
 	namespace string
 	doc       string
 	aliases   []string
+	fields []Field
 }
 
 func (r Record) Id() string {
@@ -115,7 +117,7 @@ func loadRecord(obj map[string]interface{}) Record {
 		fields = append(fields, loadField(v.(map[string]interface{})))
 	}
 	return Record{obj["name"].(string), getString(obj, "namespace"), getString(obj, "doc"),
-		getStringArray(obj, "aliases")}
+		getStringArray(obj, "aliases"), fields}
 }
 
 func loadType(obj map[string]interface{}) Type {
@@ -145,6 +147,9 @@ func Load(r io.Reader) Type {
 		// TODO load union
 	case map[string]interface{}:
 		return loadType(v)
+	default:
+		fmt.Println(v)
+
 	}
 	panic("Unhandled type")
 }
