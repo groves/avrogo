@@ -1,7 +1,6 @@
 package avrogo
 
 import (
-	"fmt"
 	"io"
 	"json"
 )
@@ -61,7 +60,7 @@ func (s String) Id() string {
 var primitives = map[string]Type{}
 
 func init() {
-	for _, t := range []Type{Null{}, Boolean{}, Int{}} {
+	for _, t := range []Type{Null{}, Boolean{}, Int{}, Long{}, Float{}, Double{}, Bytes{}, String{}} {
 		primitives[t.Id()] = t
 	}
 }
@@ -78,7 +77,7 @@ type Record struct {
 	namespace string
 	doc       string
 	aliases   []string
-	fields []Field
+	fields    []Field
 }
 
 func (r Record) Id() string {
@@ -107,7 +106,7 @@ func getStringArray(obj map[string]interface{}, name string) []string {
 }
 
 func loadField(obj map[string]interface{}) Field {
-	return Field{obj["name"].(string), getString(obj, "doc"), obj["type"],
+	return Field{obj["name"].(string), getString(obj, "doc"), loadType(obj["type"]),
 		getString(obj, "default")}
 }
 
@@ -120,36 +119,25 @@ func loadRecord(obj map[string]interface{}) Record {
 		getStringArray(obj, "aliases"), fields}
 }
 
-func loadType(obj map[string]interface{}) Type {
-	if v, ok := obj["type"]; !ok {
-		panic("FFFFUUUUUU")
-	} else if t, ok := v.(string); !ok {
-		panic("UUUUUFFFFFF")
-	} else if p, ok := primitives[t]; ok {
-		return p
-	} else {
-		switch t {
-		case "record":
-			return loadRecord(obj)
+func loadType(i interface{}) Type {
+	switch v := i.(type) {
+	case string:
+		if p, ok := primitives[v]; ok {
+			return p
+		} else {
+			panic("Unknown type name " + v)
 		}
+	case []interface{}:
+		panic("Not handling unions yet!")
+	case map[string]interface{}:
+		return loadRecord(v)
 	}
-	panic("Unknown type: " + obj["type"].(string))
+	panic("Unknown type: " + i.(string))
 }
 
 func Load(r io.Reader) Type {
 	var i interface{}
 	d := json.NewDecoder(r)
 	d.Decode(&i)
-	switch v := i.(type) {
-	case string:
-		// TODO lookup name
-	case []interface{}:
-		// TODO load union
-	case map[string]interface{}:
-		return loadType(v)
-	default:
-		fmt.Println(v)
-
-	}
-	panic("Unhandled type")
+	return loadType(i)
 }
