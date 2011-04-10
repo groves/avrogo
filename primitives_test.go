@@ -20,16 +20,16 @@ func readBadValue(t *testing.T, ty Type, data []byte) {
 }
 
 func TestBooleanEncoding(t *testing.T) {
-	read(t, Boolean{}, []byte{0x01}, true)
-	read(t, Boolean{}, []byte{0x00}, false)
-	readBadValue(t, Boolean{}, []byte{0x02})
+	read(t, Boolean, []byte{0x01}, true)
+	read(t, Boolean, []byte{0x00}, false)
+	readBadValue(t, Boolean, []byte{0x02})
 }
 
 func TestIntEncoding(t *testing.T) {
-	read(t, Int{}, []byte{0x00}, int32(0))
-	read(t, Int{}, []byte{0x01}, int32(-1))
-	read(t, Int{}, []byte{0x02}, int32(1))
-	read(t, Int{}, []byte{0x7f}, int32(-64))
-	read(t, Int{}, []byte{0x80, 0x01}, int32(64))
-	read(t, Int{}, []byte{0x81, 0x01}, int32(-65))
+	read(t, Int, []byte{0x00}, int32(0))
+	read(t, Int, []byte{0x01}, int32(-1))
+	read(t, Int, []byte{0x02}, int32(1))
+	read(t, Int, []byte{0x7f}, int32(-64))
+	read(t, Int, []byte{0x80, 0x01}, int32(64))
+	read(t, Int, []byte{0x81, 0x01}, int32(-65))
 }
