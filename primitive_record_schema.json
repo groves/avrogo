@@ -1,6 +1,7 @@
 {"type": "record", "name":"AllPrimitives", "namespace": "test",
 "fields": [
     {"name": "boolField", "type": "boolean"},
-    {"name": "nullField", "type": "null"}
+    {"name": "nullField", "type": "null"},
+    {"name": "intField", "type": "int"}
 ]
 }
