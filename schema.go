@@ -14,7 +14,7 @@ type Type interface {
 type Field struct {
 	name     string
 	doc      string
-	ftype    interface{}
+	ftype    Type
 	defvalue interface{}
 }
 
@@ -34,7 +34,15 @@ func (r Record) Id() string {
 }
 
 func (rec Record) Read(r io.Reader) (o interface{}, err os.Error) {
-	return nil, nil
+	vals := make(map[string]interface{})
+	for _, f := range rec.fields {
+		if val, err := f.ftype.Read(r) ; err == nil {
+			vals[f.name] = val
+		} else {
+			return nil, err
+		}
+	}
+	return vals, nil
 }
 
 func getString(obj map[string]interface{}, name string) string {
