@@ -3,66 +3,12 @@ package avrogo
 import (
 	"io"
 	"json"
+	"os"
 )
 
 type Type interface {
 	Id() string
-}
-
-type Null struct{}
-
-func (n Null) Id() string {
-	return "null"
-}
-
-type Boolean struct{}
-
-func (b Boolean) Id() string {
-	return "boolean"
-}
-
-type Int struct{}
-
-func (i Int) Id() string {
-	return "int"
-}
-
-type Long struct{}
-
-func (l Long) Id() string {
-	return "long"
-}
-
-type Float struct{}
-
-func (f Float) Id() string {
-	return "float"
-}
-
-type Double struct{}
-
-func (d Double) Id() string {
-	return "double"
-}
-
-type Bytes struct{}
-
-func (b Bytes) Id() string {
-	return "bytes"
-}
-
-type String struct{}
-
-func (s String) Id() string {
-	return "string"
-}
-
-var primitives = map[string]Type{}
-
-func init() {
-	for _, t := range []Type{Null{}, Boolean{}, Int{}, Long{}, Float{}, Double{}, Bytes{}, String{}} {
-		primitives[t.Id()] = t
-	}
+	Read(r io.Reader) (o interface{}, err os.Error)
 }
 
 type Field struct {
@@ -85,6 +31,10 @@ func (r Record) Id() string {
 		return r.name
 	}
 	return r.namespace + "." + r.name
+}
+
+func (rec Record) Read(r io.Reader) (o interface{}, err os.Error) {
+	return nil, nil
 }
 
 func getString(obj map[string]interface{}, name string) string {
