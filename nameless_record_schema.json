@@ -1,0 +1,6 @@
+{"type": "record", "namespace": "test",
+"fields": [
+    {"name": "boolField", "type": "boolean"},
+    {"name": "nullField", "type": "null"}
+]
+}

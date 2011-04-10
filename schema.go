@@ -6,6 +6,14 @@ import (
 	"os"
 )
 
+type SchemaError struct {
+	msg string
+}
+
+func (e SchemaError) String() string {
+	return e.msg
+}
+
 type Type interface {
 	Id() string
 	Read(r io.Reader) (o interface{}, err os.Error)
@@ -36,7 +44,7 @@ func (r Record) Id() string {
 func (rec Record) Read(r io.Reader) (o interface{}, err os.Error) {
 	vals := make(map[string]interface{})
 	for _, f := range rec.fields {
-		if val, err := f.ftype.Read(r) ; err == nil {
+		if val, err := f.ftype.Read(r); err == nil {
 			vals[f.name] = val
 		} else {
 			return nil, err
@@ -54,17 +62,27 @@ func getString(obj map[string]interface{}, name string) string {
 	panic("errrrrr")
 }
 
+func requireString(obj map[string]interface{}, name string) string {
+	if v, ok := obj[name]; !ok {
+		panic(SchemaError{"Missing required field '" + name + "'"})
+	} else if s, ok := v.(string); ok {
+		return s
+	}
+	panic(SchemaError{name + " must be a string"})
+
+}
+
 func getStringArray(obj map[string]interface{}, name string) []string {
 	if v, ok := obj[name]; !ok {
 		return []string{}
 	} else if a, ok := v.([]string); ok {
 		return a
 	}
-	panic("errrr")
+	panic(SchemaError{name + " must be an array of string, not " + obj[name].(string)})
 }
 
 func loadField(obj map[string]interface{}) Field {
-	return Field{obj["name"].(string), getString(obj, "doc"), loadType(obj["type"]),
+	return Field{requireString(obj, "name"), getString(obj, "doc"), loadType(obj["type"]),
 		getString(obj, "default")}
 }
 
@@ -73,7 +91,7 @@ func loadRecord(obj map[string]interface{}) Record {
 	for _, v := range obj["fields"].([]interface{}) {
 		fields = append(fields, loadField(v.(map[string]interface{})))
 	}
-	return Record{obj["name"].(string), getString(obj, "namespace"), getString(obj, "doc"),
+	return Record{requireString(obj, "name"), getString(obj, "namespace"), getString(obj, "doc"),
 		getStringArray(obj, "aliases"), fields}
 }
 
@@ -83,19 +101,26 @@ func loadType(i interface{}) Type {
 		if p, ok := primitives[v]; ok {
 			return p
 		} else {
-			panic("Unknown type name " + v)
+			panic(SchemaError{"Unknown type name " + v})
 		}
 	case []interface{}:
-		panic("Not handling unions yet!")
+		panic(SchemaError{"Not handling unions yet!"})
 	case map[string]interface{}:
 		return loadRecord(v)
 	}
-	panic("Unknown type: " + i.(string))
+	panic(SchemaError{"Unknown type: " + i.(string)})
 }
 
-func Load(r io.Reader) Type {
+func Load(r io.Reader) (loaded Type, err os.Error) {
 	var i interface{}
 	d := json.NewDecoder(r)
 	d.Decode(&i)
-	return loadType(i)
+	defer func() {
+		if e := recover(); e != nil {
+			loaded = nil
+			err = e.(SchemaError)
+		}
+	}()
+	loaded = loadType(i)
+	return
 }

@@ -7,12 +7,19 @@ import (
 )
 
 func load(t *testing.T, fn string) Type {
-	reader, err := os.Open(fn, os.O_RDONLY, 0444)
-	if err == nil {
-		return Load(reader)
+	loaded, err := loadErr(t, fn)
+	if err != nil {
+		t.Fatalf("Schema error: %s", err)
 	}
-	t.Fatalf("Unable to open file %s", fn)
-	panic("Shouldn't get here")
+	return loaded
+}
+
+func loadErr(t *testing.T, fn string) (Type, os.Error) {
+	reader, err := os.Open(fn, os.O_RDONLY, 0444)
+	if err != nil {
+		t.Fatalf("Unable to open file %s", fn)
+	}
+	return Load(reader)
 }
 
 func SkipTestDecode(t *testing.T) {
@@ -39,6 +46,11 @@ func TestPrimitiveDecode(t *testing.T) {
 	if decoded.(map[string]interface{})["boolField"] != true {
 		t.Fatalf("Got wrong value for boolField")
 	}
+}
 
-
+func TestNamelessRecord(t *testing.T) {
+	_, err := loadErr(t, "nameless_record_schema.json")
+	if err.String() != "Missing required field 'name'" {
+		t.Fatalf("Incorrect SchemaError: %s", err)
+	}
 }
