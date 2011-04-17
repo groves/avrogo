@@ -24,14 +24,14 @@ func loadErr(t *testing.T, fn string) (Type, os.Error) {
 
 func SkipTestDecode(t *testing.T) {
 	m := load(t, "test_schema.json")
-	if m.Id() != "org.apache.avro.Interop" {
+	if m.(Record).Id() != "org.apache.avro.Interop" {
 		t.Fatalf("Read json incorrectly? parsed=%v", m)
 	}
 }
 
 func TestPrimitiveDecode(t *testing.T) {
 	m := load(t, "primitive_record_schema.json")
-	if m.Id() != "test.AllPrimitives" {
+	if m.(Record).Id() != "test.AllPrimitives" {
 		t.Fatalf("Read record id incorrectly?%v", m)
 	}
 	r := m.(Record)

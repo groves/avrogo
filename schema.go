@@ -1,6 +1,7 @@
 package avrogo
 
 import (
+	"fmt"
 	"io"
 	"json"
 	"os"
@@ -15,7 +16,6 @@ func (e SchemaError) String() string {
 }
 
 type Type interface {
-	Id() string
 	Read(r io.Reader) (o interface{}, err os.Error)
 }
 
@@ -48,6 +48,35 @@ func (rec Record) Read(r io.Reader) (o interface{}, err os.Error) {
 			vals[f.name] = val
 		} else {
 			return nil, err
+		}
+	}
+	return vals, nil
+}
+
+type Map struct {
+	values Type
+}
+
+func (m Map) Read(r io.Reader) (interface{}, os.Error) {
+	vals := make(map[string]interface{})
+	for count, err := readLong(r); count != 0; count, err = readLong(r) {
+		if err != nil {
+			return nil, err
+		}
+		if count < 0 {
+			if _, err := readLong(r); err != nil { // Ignore the size
+				return nil, err
+			}
+			count = -count
+		}
+		for ; count > 0; count-- {
+			if k, err := readString(r); err != nil {
+				return nil, err
+			} else if v, err := m.values.Read(r); err != nil {
+				return nil, err
+			} else {
+				vals[k] = v
+			}
 		}
 	}
 	return vals, nil
@@ -86,6 +115,10 @@ func loadField(obj map[string]interface{}) Field {
 		getString(obj, "default")}
 }
 
+func loadMap(obj map[string]interface{}) Map {
+	return Map{loadType(requireString(obj, "values"))}
+}
+
 func loadRecord(obj map[string]interface{}) Record {
 	var fields []Field
 	for _, v := range obj["fields"].([]interface{}) {
@@ -106,7 +139,13 @@ func loadType(i interface{}) Type {
 	case []interface{}:
 		panic(SchemaError{"Not handling unions yet!"})
 	case map[string]interface{}:
-		return loadRecord(v)
+		if t, ok := v["type"]; !ok {
+			panic(SchemaError{fmt.Sprintf("Type object without type name %s", v)})
+		} else if t == "map" {
+			return loadMap(v)
+		} else if t == "record" {
+			return loadRecord(v)
+		}
 	}
 	panic(SchemaError{"Unknown type: " + i.(string)})
 }

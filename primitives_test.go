@@ -5,12 +5,16 @@ import (
 	"testing"
 )
 
-func read(t *testing.T, ty Type, data []byte, expected interface{}) {
+func readAndCheck(t *testing.T, ty Type, data []byte, checker func(interface{}) bool) {
 	if v, err := ty.Read(bytes.NewBuffer(data)); err != nil {
 		t.Errorf("Error reading %x: %v", data, err)
-	} else if v != expected {
-		t.Errorf("Expected '%v' for '%x' but got '%v'", expected, data, ty, v)
+	} else if !checker(v) {
+		t.Errorf("got '%v' for '%x', which didn't check out", v, data)
 	}
+}
+
+func read(t *testing.T, ty Type, data []byte, expected interface{}) {
+	readAndCheck(t, ty, data, func(v interface{}) bool { return expected == v })
 }
 
 func readBadValue(t *testing.T, ty Type, data []byte) {
@@ -52,4 +56,12 @@ func TestDoubleEncoding(t *testing.T) {
 func TestStringEncoding(t *testing.T) {
 	read(t, String, []byte{0x00}, "")
 	read(t, String, []byte{0x06, 0x66, 0x6f, 0x6f}, "foo")
+}
+
+func TestMapDecode(t *testing.T) {
+	readAndCheck(t, Map{Int}, []byte{0x02, 0x06, 0x66, 0x6f, 0x6f, 0x01, 0x00},
+		func(v interface{}) bool {
+			return v.(map[string]interface{})["foo"] == int32(-1)
+		})
+
 }
