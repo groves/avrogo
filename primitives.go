@@ -101,10 +101,12 @@ func readBytes(r io.Reader) (interface{}, os.Error) {
 	return b, nil
 }
 
-type String struct{}
-
-func (s String) Id() string {
-	return "string"
+func readString(r io.Reader) (interface{}, os.Error) {
+	buf, err := readBytes(r)
+	if err != nil {
+		return nil, err
+	}
+	return string(buf.([]byte)), nil
 }
 
 var (
@@ -116,10 +118,11 @@ var (
 	Float      = primitive{"float", readFloat}
 	Double     = primitive{"double", readDouble}
 	Bytes      = primitive{"bytes", readBytes}
+	String     = primitive{"string", readString}
 )
 
 func init() {
-	for _, t := range []Type{Null, Boolean, Int, Long, Float, Double, Bytes} { //, String{}} {
+	for _, t := range []Type{Null, Boolean, Int, Long, Float, Double, Bytes, String} {
 		primitives[t.Id()] = t
 	}
 }

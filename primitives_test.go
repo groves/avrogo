@@ -48,3 +48,8 @@ func TestFloatEncoding(t *testing.T) {
 func TestDoubleEncoding(t *testing.T) {
 	read(t, Double, []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, float64(0.0))
 }
+
+func TestStringEncoding(t *testing.T) {
+	read(t, String, []byte{0x00}, "")
+	read(t, String, []byte{0x06, 0x66, 0x6f, 0x6f}, "foo")
+}
