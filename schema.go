@@ -34,6 +34,13 @@ type Record struct {
 	fields    []Field
 }
 
+type Fixed struct {
+	name      string
+	namespace string
+	aliases   []string
+	size      int
+}
+
 func (r Record) Id() string {
 	if r.namespace == "" {
 		return r.name
@@ -51,6 +58,15 @@ func (rec Record) Read(r io.Reader) (o interface{}, err os.Error) {
 		}
 	}
 	return vals, nil
+}
+
+func (f Fixed) Read(r io.Reader) (interface{}, os.Error) {
+	b := make([]byte, f.size)
+	_, err := io.ReadFull(r, b)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
 type Map struct {
@@ -128,6 +144,15 @@ func loadRecord(obj map[string]interface{}) Record {
 		getStringArray(obj, "aliases"), fields}
 }
 
+func loadFixed(obj map[string]interface{}) Fixed {
+	var size, ok = obj["size"]
+	if !ok {
+		panic(SchemaError{""})
+	}
+	return Fixed{requireString(obj, "name"), getString(obj, "namespace"),
+		getStringArray(obj, "aliases"), size.(int)}
+}
+
 func loadType(i interface{}) Type {
 	switch v := i.(type) {
 	case string:
@@ -145,15 +170,21 @@ func loadType(i interface{}) Type {
 			return loadMap(v)
 		} else if t == "record" {
 			return loadRecord(v)
+		} else if t == "fixed" {
+			return loadFixed(v)
 		}
 	}
-	panic(SchemaError{"Unknown type: " + i.(string)})
+	panic(SchemaError{fmt.Sprintf("Unknown type: %v %T", i, i)})
 }
 
-func Load(r io.Reader) (loaded Type, err os.Error) {
+func LoadJsonSchema(r io.Reader) (Type, os.Error) {
 	var i interface{}
 	d := json.NewDecoder(r)
 	d.Decode(&i)
+	return LoadSchema(i)
+}
+
+func LoadSchema(i interface{}) (loaded Type, err os.Error) {
 	defer func() {
 		if e := recover(); e != nil {
 			loaded = nil

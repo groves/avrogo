@@ -19,7 +19,7 @@ func loadErr(t *testing.T, fn string) (Type, os.Error) {
 	if err != nil {
 		t.Fatalf("Unable to open file %s", fn)
 	}
-	return Load(reader)
+	return LoadJsonSchema(reader)
 }
 
 func SkipTestDecode(t *testing.T) {
